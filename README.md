@@ -124,7 +124,7 @@ BuyZo/
 
 ## Deploy to Vercel
 
-See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for MongoDB Atlas, env vars, and Google OAuth setup.
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)**. If the wrong site was deployed, use **[VERCEL_FIX.md](./VERCEL_FIX.md)**.
 
 ## Next Phases
 

@@ -17,7 +17,7 @@ export const getGoogleCallbackUrl = () => {
     return `${process.env.BACKEND_URL.replace(/\/$/, '')}/api/auth/google/callback`;
   }
   if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}/_/backend/api/auth/google/callback`;
+    return `https://${process.env.VERCEL_URL}/api/auth/google/callback`;
   }
   return 'http://localhost:5000/api/auth/google/callback';
 };
