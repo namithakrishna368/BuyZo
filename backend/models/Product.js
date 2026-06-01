@@ -87,6 +87,9 @@ const productSchema = new mongoose.Schema(
 );
 
 productSchema.index({ name: 'text', description: 'text', category: 'text' });
+productSchema.index({ isActive: 1, category: 1, bestseller: -1, rating: -1 });
+productSchema.index({ isActive: 1, slug: 1 });
+productSchema.index({ isActive: 1, featured: 1, rating: -1 });
 
 const Product = mongoose.model('Product', productSchema);
 export default Product;
