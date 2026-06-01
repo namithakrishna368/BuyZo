@@ -54,9 +54,10 @@ npm run seed:products
 ## Step 3 — Vercel project settings
 
 1. [vercel.com/new](https://vercel.com/new) → Import **`namithakrishna368/BuyZo`**.
-2. **Framework Preset:** choose **Services** (not Vite alone).
-3. Root directory: **`.`** (repository root).
-4. Deploy once, note your URL: e.g. `https://buy-zo.vercel.app`.
+2. **Project name:** `BuyZo` (or `buyzo` — URL will be `buyzo.vercel.app` if available).
+3. **Framework Preset:** choose **Services** (not Vite alone).
+4. Root directory: **`.`** (repository root).
+5. Deploy once, note your URL: e.g. `https://buyzo.vercel.app`.
 
 ---
 

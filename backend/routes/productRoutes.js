@@ -6,8 +6,11 @@ import {
   getDeals,
   getCategories,
 } from '../controllers/productController.js';
+import { cachePublic } from '../middleware/cachePublic.js';
 
 const router = express.Router();
+
+router.use(cachePublic(120));
 
 router.get('/deals', getDeals);
 router.get('/categories', getCategories);

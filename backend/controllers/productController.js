@@ -1,17 +1,18 @@
 import Product from '../models/Product.js';
 import { SHOP_CATEGORIES, MIN_PRODUCTS_PER_CATEGORY } from '../constants/categories.js';
 
-const formatProduct = (product) => ({
+const LIST_SELECT =
+  'name slug price comparePrice category brand stock rating numReviews featured prime bestseller dealLabel';
+
+const formatProductCard = (product) => ({
   _id: product._id,
   name: product.name,
   slug: product.slug,
-  description: product.description,
   price: product.price,
   comparePrice: product.comparePrice,
   category: product.category,
   brand: product.brand,
   imageUrl: `/images/products/${product.slug}.jpg`,
-  images: [`/images/products/${product.slug}.jpg`, ...(product.images || []).filter((u) => u?.startsWith('http'))],
   stock: product.stock,
   rating: product.rating,
   numReviews: product.numReviews,
@@ -19,13 +20,22 @@ const formatProduct = (product) => ({
   prime: product.prime,
   bestseller: product.bestseller,
   dealLabel: product.dealLabel,
+  inStock: product.stock > 0,
+});
+
+const formatProduct = (product) => ({
+  ...formatProductCard(product),
+  description: product.description,
+  images: [
+    `/images/products/${product.slug}.jpg`,
+    ...(product.images || []).filter((u) => u?.startsWith('http')),
+  ],
   specs:
     product.specs instanceof Map
       ? Object.fromEntries(product.specs)
       : product.specs && typeof product.specs === 'object'
         ? product.specs
         : {},
-  inStock: product.stock > 0,
 });
 
 export const getProducts = async (req, res) => {
@@ -79,25 +89,32 @@ export const getProducts = async (req, res) => {
       reviews: { numReviews: -1 },
     };
 
-    const skip = (Number(page) - 1) * Number(limit);
-    const total = await Product.countDocuments(query);
-    const products = await Product.find(query)
-      .sort(sortOptions[sort] || sortOptions.featured)
-      .skip(skip)
-      .limit(Number(limit));
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+    const skip = (pageNum - 1) * limitNum;
 
-    const dbCategories = await Product.distinct('category', { isActive: true });
+    const [total, products, dbCategories] = await Promise.all([
+      Product.countDocuments(query),
+      Product.find(query)
+        .select(LIST_SELECT)
+        .sort(sortOptions[sort] || sortOptions.featured)
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      Product.distinct('category', { isActive: true }),
+    ]);
+
     const categories = SHOP_CATEGORIES.filter((c) => dbCategories.includes(c));
 
     res.json({
       success: true,
-      products: products.map(formatProduct),
+      products: products.map(formatProductCard),
       categories: categories.length ? categories : SHOP_CATEGORIES,
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / Number(limit)),
+        pages: Math.ceil(total / limitNum),
       },
     });
   } catch (error) {
@@ -109,21 +126,35 @@ export const getCategories = async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || MIN_PRODUCTS_PER_CATEGORY, 12);
 
-    const categories = await Promise.all(
-      SHOP_CATEGORIES.map(async (name) => {
-        const count = await Product.countDocuments({ category: name, isActive: true });
-        const products = await Product.find({ category: name, isActive: true })
-          .sort({ bestseller: -1, rating: -1, numReviews: -1 })
-          .limit(limit)
-          .lean();
+    const grouped = await Product.aggregate([
+      { $match: { isActive: true, category: { $in: SHOP_CATEGORIES } } },
+      { $sort: { bestseller: -1, rating: -1, numReviews: -1 } },
+      {
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 },
+          products: { $push: '$$ROOT' },
+        },
+      },
+      {
+        $project: {
+          name: '$_id',
+          count: 1,
+          products: { $slice: ['$products', limit] },
+        },
+      },
+    ]);
 
-        return {
-          name,
-          count,
-          products: products.map(formatProduct),
-        };
-      })
-    );
+    const byName = Object.fromEntries(grouped.map((g) => [g.name, g]));
+
+    const categories = SHOP_CATEGORIES.map((name) => {
+      const row = byName[name];
+      return {
+        name,
+        count: row?.count ?? 0,
+        products: (row?.products ?? []).map(formatProductCard),
+      };
+    });
 
     res.json({ success: true, categories });
   } catch (error) {
@@ -138,10 +169,12 @@ export const getDeals = async (req, res) => {
       comparePrice: { $gt: 0 },
       $expr: { $gt: ['$comparePrice', '$price'] },
     })
+      .select(LIST_SELECT)
       .sort({ rating: -1 })
-      .limit(12);
+      .limit(12)
+      .lean();
 
-    res.json({ success: true, products: products.map(formatProduct) });
+    res.json({ success: true, products: products.map(formatProductCard) });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -149,33 +182,38 @@ export const getDeals = async (req, res) => {
 
 export const getProductBySlug = async (req, res) => {
   try {
-    const product = await Product.findOne({ slug: req.params.slug, isActive: true });
+    const product = await Product.findOne({ slug: req.params.slug, isActive: true }).lean();
 
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found.' });
     }
 
-    const related = await Product.find({
-      _id: { $ne: product._id },
-      category: product.category,
-      isActive: true,
-    })
-      .limit(6)
-      .select('name slug price images rating stock comparePrice prime bestseller numReviews brand');
-
-    const alsoBought = await Product.find({
-      _id: { $ne: product._id },
-      isActive: true,
-      featured: true,
-    })
-      .limit(6)
-      .select('name slug price images rating stock comparePrice prime bestseller numReviews');
+    const [related, alsoBought] = await Promise.all([
+      Product.find({
+        _id: { $ne: product._id },
+        category: product.category,
+        isActive: true,
+      })
+        .select(LIST_SELECT)
+        .sort({ rating: -1 })
+        .limit(6)
+        .lean(),
+      Product.find({
+        _id: { $ne: product._id },
+        isActive: true,
+        featured: true,
+      })
+        .select(LIST_SELECT)
+        .sort({ rating: -1 })
+        .limit(6)
+        .lean(),
+    ]);
 
     res.json({
       success: true,
       product: formatProduct(product),
-      related: related.map(formatProduct),
-      alsoBought: alsoBought.map(formatProduct),
+      related: related.map(formatProductCard),
+      alsoBought: alsoBought.map(formatProductCard),
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -184,7 +222,7 @@ export const getProductBySlug = async (req, res) => {
 
 export const getProductById = async (req, res) => {
   try {
-    const product = await Product.findOne({ _id: req.params.id, isActive: true });
+    const product = await Product.findOne({ _id: req.params.id, isActive: true }).lean();
 
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found.' });
