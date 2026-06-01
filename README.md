@@ -122,9 +122,12 @@ BuyZo/
         └── pages/
 ```
 
+## Deploy to Vercel
+
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for MongoDB Atlas, env vars, and Google OAuth setup.
+
 ## Next Phases
 
-- Product catalog & categories
-- Cart & checkout
-- Orders & payments
+- Cart checkout & payments
+- Orders
 - Reviews & wishlist
