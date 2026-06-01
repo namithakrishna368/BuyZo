@@ -4,6 +4,7 @@ import { sendVerificationEmail } from '../utils/sendEmail.js';
 import { generateToken, sendTokenCookie } from '../utils/generateToken.js';
 import { isGoogleOAuthConfigured, isSmtpConfigured, isDevSkipEmailVerification } from '../utils/appConfig.js';
 import { assignAndSendOtp, verifyUserOtp, clearUserOtp } from '../utils/otpService.js';
+import { getClientUrl } from '../utils/clientUrl.js';
 
 const formatUser = (user) => ({
   _id: user._id,
@@ -369,8 +370,8 @@ export const googleCallback = async (req, res) => {
     sendTokenCookie(res, token);
 
     const redirectPath = req.user.profileComplete ? '/' : '/profile/setup';
-    res.redirect(`${process.env.CLIENT_URL}/auth/google/success?token=${token}&redirect=${encodeURIComponent(redirectPath)}`);
+    res.redirect(`${getClientUrl()}/auth/google/success?token=${token}&redirect=${encodeURIComponent(redirectPath)}`);
   } catch (error) {
-    res.redirect(`${process.env.CLIENT_URL}/login?error=google_auth_failed`);
+    res.redirect(`${getClientUrl()}/login?error=google_auth_failed`);
   }
 };

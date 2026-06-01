@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import connectDB from './config/db.js';
 import configurePassport from './config/passport.js';
+import { getClientUrl } from './utils/clientUrl.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import productRoutes from './routes/productRoutes.js';
@@ -19,6 +20,7 @@ const getAllowedOrigins = () => {
   const list = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    getClientUrl(),
     process.env.CLIENT_URL,
     process.env.FRONTEND_URL,
   ];
@@ -49,6 +51,10 @@ export const createApp = async () => {
   configurePassport();
 
   const app = express();
+
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+    app.set('trust proxy', 1);
+  }
 
   app.use(
     cors({

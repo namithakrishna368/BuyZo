@@ -1,36 +1,16 @@
 import { FcGoogle } from 'react-icons/fc';
+import { getApiBase } from '../utils/apiBase.js';
 
-const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-export const GOOGLE_AUTH_URL = `${apiBase.replace(/\/$/, '')}/auth/google`;
+export const GOOGLE_AUTH_URL = `${getApiBase()}/auth/google`;
 
-const GoogleAuthButton = ({
-  label = 'Continue with Google',
-  dividerText = 'or continue with email',
-  showDivider = true,
-}) => (
-  <>
-    <a
-      href={GOOGLE_AUTH_URL}
-      className="btn-google group"
-      aria-label={label}
-    >
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-        <FcGoogle className="h-5 w-5" aria-hidden="true" />
-      </span>
-      <span className="font-medium">{label}</span>
-    </a>
-
-    {showDivider && (
-      <div className="relative mb-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-cream-200" />
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="bg-white px-4 text-navy-400">{dividerText}</span>
-        </div>
-      </div>
-    )}
-  </>
+const GoogleAuthButton = ({ label = 'Continue with Google', className = '' }) => (
+  <a
+    href={GOOGLE_AUTH_URL}
+    className={`flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 font-medium text-gray-800 shadow-sm transition hover:bg-gray-50 ${className}`}
+  >
+    <FcGoogle className="text-xl" />
+    {label}
+  </a>
 );
 
 export default GoogleAuthButton;

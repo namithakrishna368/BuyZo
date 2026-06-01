@@ -19,6 +19,7 @@ import {
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import { requireGoogleOAuth } from '../middleware/requireGoogleOAuth.js';
+import { getClientUrl } from '../utils/clientUrl.js';
 
 const router = express.Router();
 
@@ -83,7 +84,7 @@ router.get(
   requireGoogleOAuth,
   passport.authenticate('google', {
     session: false,
-    failureRedirect: `${process.env.CLIENT_URL}/login?error=google_auth_failed`,
+    failureRedirect: `${getClientUrl()}/login?error=google_auth_failed`,
   }),
   googleCallback
 );

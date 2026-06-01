@@ -1,85 +1,146 @@
-# Deploy BuyZO to Vercel
+# Deploy BuyZO to Vercel (Services)
 
-One Vercel project serves **React (frontend)** and **Express API** (`/api/*`). MongoDB must be **MongoDB Atlas** (cloud).
+Vercel **Services** runs two apps from one repo:
 
-## 1. MongoDB Atlas
+| Service | Folder | URL |
+|---------|--------|-----|
+| **frontend** | `frontend` | `https://YOUR-APP.vercel.app/` |
+| **backend** | `backend` | `https://YOUR-APP.vercel.app/_/backend` |
 
-1. Create a free cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas).
-2. Database Access → create user + password.
-3. Network Access → **Allow access from anywhere** (`0.0.0.0/0`) for Vercel.
-4. Connect → copy connection string, e.g.  
-   `mongodb+srv://USER:PASS@cluster0.xxxxx.mongodb.net/buyzo?retryWrites=true&w=majority`
+API routes: `https://YOUR-APP.vercel.app/_/backend/api/...`
 
-## 2. Seed database (from your PC)
+---
+
+## Step 1 — MongoDB Atlas
+
+1. Create free cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas).
+2. **Network Access** → allow `0.0.0.0/0`.
+3. Copy connection string → `MONGODB_URI`.
+
+Seed from your PC:
 
 ```bash
 cd backend
-# Put Atlas URI in .env as MONGODB_URI
+# MONGODB_URI=your Atlas URI in .env
 npm run seed:admin
 npm run seed:products
-npm run images:ensure
 ```
 
-## 3. Import project on Vercel
+---
 
-1. Go to [vercel.com](https://vercel.com) → **Add New** → **Project**.
-2. Import GitHub repo: `namithakrishna368/BuyZo`.
-3. **Root Directory:** leave as `.` (repo root).
-4. Vercel reads `vercel.json` automatically.
+## Step 2 — `vercel.json` (already in repo)
 
-## 4. Environment variables (Vercel → Settings → Environment Variables)
+```json
+{
+  "experimentalServices": {
+    "frontend": {
+      "entrypoint": "frontend",
+      "routePrefix": "/",
+      "framework": "vite"
+    },
+    "backend": {
+      "entrypoint": "backend",
+      "routePrefix": "/_/backend",
+      "framework": "express"
+    }
+  }
+}
+```
 
-### Frontend (build time)
+> If Vercel UI shows `"root"` instead of `"entrypoint"`, use **`entrypoint`** (official field name).
+
+---
+
+## Step 3 — Vercel project settings
+
+1. [vercel.com/new](https://vercel.com/new) → Import **`namithakrishna368/BuyZo`**.
+2. **Framework Preset:** choose **Services** (not Vite alone).
+3. Root directory: **`.`** (repository root).
+4. Deploy once, note your URL: e.g. `https://buy-zo.vercel.app`.
+
+---
+
+## Step 4 — Environment variables
+
+Set in **Vercel → Project → Settings → Environment Variables**.
+
+Use **`vercel.env.example`** in the repo root as a copy-paste checklist (replace `YOUR-APP`).
+
+### Frontend service (build + client)
 
 | Name | Value |
 |------|--------|
-| `VITE_API_URL` | `/api` |
+| `VITE_API_URL` | `/_/backend/api` |
 
-### Backend (runtime)
+### Backend service (runtime)
 
-| Name | Example |
-|------|---------|
+| Name | Value |
+|------|--------|
 | `MONGODB_URI` | `mongodb+srv://...` |
 | `JWT_SECRET` | long random string |
 | `JWT_EXPIRE` | `7d` |
 | `NODE_ENV` | `production` |
 | `CLIENT_URL` | `https://YOUR-APP.vercel.app` |
-| `GOOGLE_CLIENT_ID` | from Google Cloud |
-| `GOOGLE_CLIENT_SECRET` | from Google Cloud |
-| `GOOGLE_CALLBACK_URL` | `https://YOUR-APP.vercel.app/api/auth/google/callback` |
+| `GOOGLE_CALLBACK_URL` | `https://YOUR-APP.vercel.app/_/backend/api/auth/google/callback` |
+| `GOOGLE_CLIENT_ID` | (Google Cloud) |
+| `GOOGLE_CLIENT_SECRET` | (Google Cloud) |
 | `SMTP_HOST` | `smtp.gmail.com` |
 | `SMTP_PORT` | `587` |
 | `SMTP_USER` | your email |
 | `SMTP_PASS` | app password |
 | `EMAIL_FROM` | `BuyZO <noreply@buyzo.com>` |
 
-Replace `YOUR-APP` with your real Vercel URL after first deploy.
+Vercel may also auto-inject `BACKEND_URL` / `VITE_BACKEND_URL` — `VITE_API_URL` is the one that matters for the shop.
 
-## 5. Google OAuth (production)
+---
 
-In [Google Cloud Console](https://console.cloud.google.com/) → OAuth client:
+## Step 5 — Google OAuth
 
-- **Authorized JavaScript origins:** `https://YOUR-APP.vercel.app`
-- **Authorized redirect URIs:** `https://YOUR-APP.vercel.app/api/auth/google/callback`
+In [Google Cloud Console](https://console.cloud.google.com/):
 
-## 6. Deploy
+- **JavaScript origins:** `https://YOUR-APP.vercel.app`
+- **Redirect URI:** `https://YOUR-APP.vercel.app/_/backend/api/auth/google/callback`
 
-Click **Deploy**. After deploy:
+---
 
-- Shop: `https://YOUR-APP.vercel.app`
-- API health: `https://YOUR-APP.vercel.app/api/health`
+## Step 6 — Redeploy
 
-## 7. Local vs production
+After env vars → **Deployments** → **Redeploy** latest.
 
-| | Local | Vercel |
-|---|--------|--------|
-| Frontend | `npm run dev` in `frontend` | static build |
-| API | `npm run dev` in `backend` | `/api` serverless |
-| `VITE_API_URL` | `http://localhost:5000/api` | `/api` |
+### Test
+
+| URL | Expected |
+|-----|----------|
+| `https://YOUR-APP.vercel.app` | Shop home |
+| `https://YOUR-APP.vercel.app/_/backend/api/health` | `{"success":true,...}` |
+
+---
+
+## Local development (unchanged)
+
+```bash
+# Terminal 1
+cd backend && npm run dev
+
+# Terminal 2
+cd frontend && npm run dev
+```
+
+`frontend/.env`: `VITE_API_URL=http://localhost:5000/api`
+
+Optional — all services locally:
+
+```bash
+vercel dev -L
+```
+
+---
 
 ## Troubleshooting
 
-- **API 500 / MongoDB:** check `MONGODB_URI` and Atlas IP allowlist.
-- **CORS:** set `CLIENT_URL` to exact Vercel URL (no trailing slash).
-- **Google login:** update callback URL after you know the Vercel domain.
-- **Empty shop:** run `seed:products` against Atlas from your machine.
+| Problem | Fix |
+|---------|-----|
+| Shop loads, no products | Seed Atlas; check `MONGODB_URI` on **backend** service |
+| API 404 | Confirm `VITE_API_URL=/_/backend/api` and redeploy frontend |
+| Google login fails | Update callback URL with `/_/backend/api/auth/...` |
+| Build fails | Project preset must be **Services**, not plain Vite |

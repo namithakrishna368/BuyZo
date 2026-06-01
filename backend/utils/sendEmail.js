@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { isSmtpConfigured } from './appConfig.js';
+import { getClientUrl } from './clientUrl.js';
 
 const createTransporter = () => {
   return nodemailer.createTransport({
@@ -17,7 +18,7 @@ const createTransporter = () => {
 };
 
 export const sendVerificationEmail = async (email, name, token) => {
-  const verifyUrl = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
+  const verifyUrl = `${getClientUrl()}/verify-email?token=${token}`;
 
   if (!isSmtpConfigured()) {
     if (process.env.NODE_ENV === 'development') {
@@ -55,7 +56,7 @@ export const sendVerificationEmail = async (email, name, token) => {
 };
 
 export const sendPasswordResetEmail = async (email, name, token) => {
-  const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
+  const resetUrl = `${getClientUrl()}/reset-password?token=${token}`;
 
   if (!isSmtpConfigured()) {
     if (process.env.NODE_ENV === 'development') {
