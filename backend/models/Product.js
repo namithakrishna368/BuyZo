@@ -78,6 +78,17 @@ const productSchema = new mongoose.Schema(
       of: String,
       default: {},
     },
+    features: {
+      type: [String],
+      default: [],
+    },
+    variants: [
+      {
+        size: String,
+        color: String,
+        stock: { type: Number, default: 0 },
+      },
+    ],
     isActive: {
       type: Boolean,
       default: true,

@@ -38,7 +38,12 @@ const Login = () => {
       const { data } = await api.post('/auth/login', payload);
       login(data.user, data.token);
       toast.success('Welcome back!');
-      navigate(data.user.profileComplete ? '/' : '/profile/setup', { replace: true });
+      const redirectUrl = searchParams.get('redirect');
+      if (redirectUrl) {
+        navigate(redirectUrl, { replace: true });
+      } else {
+        navigate(data.user.profileComplete ? '/' : '/profile/setup', { replace: true });
+      }
     } catch (err) {
       const data = err.response?.data;
       const msg = data?.message || (err.code === 'ERR_NETWORK' ? 'Cannot reach server. Is the backend running on port 5000?' : 'Login failed');
@@ -159,7 +164,7 @@ const Login = () => {
 
         <p className="mt-6 text-center text-sm text-navy-500">
           Don&apos;t have an account?{' '}
-          <Link to="/register" className="font-semibold text-navy-600 hover:underline">
+          <Link to={`/register${searchParams.get('redirect') ? '?redirect=' + encodeURIComponent(searchParams.get('redirect')) : ''}`} className="font-semibold text-navy-600 hover:underline">
             Create one
           </Link>
         </p>

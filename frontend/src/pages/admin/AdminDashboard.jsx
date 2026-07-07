@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { FiUsers, FiUserCheck, FiUserX, FiMail } from 'react-icons/fi';
+import { FiUsers, FiUserCheck, FiUserX, FiMail, FiGrid, FiShoppingCart, FiDollarSign } from 'react-icons/fi';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 const statCards = [
-  { key: 'totalUsers', label: 'Total Users', icon: FiUsers, color: 'bg-navy-100 text-navy-600' },
-  { key: 'activeUsers', label: 'Active Users', icon: FiUserCheck, color: 'bg-green-100 text-green-600' },
-  { key: 'blockedUsers', label: 'Blocked Users', icon: FiUserX, color: 'bg-red-100 text-red-600' },
-  { key: 'verifiedUsers', label: 'Verified Emails', icon: FiMail, color: 'bg-blue-100 text-blue-600' },
+  { key: 'totalRevenue', label: 'Total Revenue (₹)', icon: FiUsers, color: 'bg-green-100 text-green-600' },
+  { key: 'totalOrders', label: 'Total Orders', icon: FiUserCheck, color: 'bg-blue-100 text-blue-600' },
+  { key: 'totalProducts', label: 'Active Products', icon: FiGrid, color: 'bg-yellow-100 text-yellow-600' },
+  { key: 'activeUsers', label: 'Active Users', icon: FiUserCheck, color: 'bg-navy-100 text-navy-600' },
 ];
 
 const AdminDashboard = () => {

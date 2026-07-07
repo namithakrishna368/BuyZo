@@ -1,5 +1,6 @@
 import Product from '../models/Product.js';
-import { SHOP_CATEGORIES, MIN_PRODUCTS_PER_CATEGORY } from '../constants/categories.js';
+import Category from '../models/Category.js';
+import { MIN_PRODUCTS_PER_CATEGORY } from '../constants/categories.js';
 
 const LIST_SELECT =
   'name slug price comparePrice category brand stock rating numReviews featured prime bestseller dealLabel';
@@ -64,9 +65,12 @@ export const getProducts = async (req, res) => {
       ];
     }
 
+    const activeCategories = await Category.find({ isActive: true }).lean();
+    const activeCategoryNames = activeCategories.map(c => c.name);
+
     if (category && category !== 'all') {
       const cat = decodeURIComponent(String(category)).trim();
-      const match = SHOP_CATEGORIES.find((c) => c.toLowerCase() === cat.toLowerCase());
+      const match = activeCategoryNames.find((c) => c.toLowerCase() === cat.toLowerCase());
       query.category = match || cat;
     }
 
@@ -104,12 +108,12 @@ export const getProducts = async (req, res) => {
       Product.distinct('category', { isActive: true }),
     ]);
 
-    const categories = SHOP_CATEGORIES.filter((c) => dbCategories.includes(c));
+    const categories = activeCategoryNames.filter((c) => dbCategories.includes(c));
 
     res.json({
       success: true,
       products: products.map(formatProductCard),
-      categories: categories.length ? categories : SHOP_CATEGORIES,
+      categories: categories.length ? categories : activeCategoryNames,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -126,8 +130,11 @@ export const getCategories = async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || MIN_PRODUCTS_PER_CATEGORY, 12);
 
+    const activeCategories = await Category.find({ isActive: true }).lean();
+    const activeCategoryNames = activeCategories.map(c => c.name);
+
     const grouped = await Product.aggregate([
-      { $match: { isActive: true, category: { $in: SHOP_CATEGORIES } } },
+      { $match: { isActive: true, category: { $in: activeCategoryNames } } },
       { $sort: { bestseller: -1, rating: -1, numReviews: -1 } },
       {
         $group: {
@@ -147,7 +154,7 @@ export const getCategories = async (req, res) => {
 
     const byName = Object.fromEntries(grouped.map((g) => [g.name, g]));
 
-    const categories = SHOP_CATEGORIES.map((name) => {
+    const categories = activeCategoryNames.map((name) => {
       const row = byName[name];
       return {
         name,

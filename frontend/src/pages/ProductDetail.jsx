@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FiCheck, FiTruck, FiShield } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import ShopLayout from '../layouts/ShopLayout';
 import ProductCardAmazon from '../components/amazon/ProductCardAmazon';
 import StarRating from '../components/amazon/StarRating';
@@ -16,7 +17,9 @@ import { formatINR, FREE_DELIVERY_MIN } from '../utils/currency';
 const ProductDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
   const [alsoBought, setAlsoBought] = useState([]);
@@ -43,11 +46,19 @@ const ProductDetail = () => {
   }, [slug]);
 
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
+      return;
+    }
     addToCart(product, qty);
     toast.success('Added to cart');
   };
 
   const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
+      return;
+    }
     addToCart(product, qty);
     navigate('/cart');
   };
@@ -101,7 +112,7 @@ const ProductDetail = () => {
               <div className="relative mx-auto flex w-full max-w-lg items-center justify-center bg-[#f7fafa] p-3 sm:min-h-[320px] sm:p-6 lg:min-h-[400px]">
                 <ProductImage
                   slug={product.slug}
-                  src={product.imageUrl}
+                  src={images[imageIndex]?.startsWith('/') ? images[imageIndex] : product.imageUrl}
                   fallbackSrc={images.find((u) => u?.startsWith('http'))}
                   alt={product.name}
                   priority
@@ -199,6 +210,17 @@ const ProductDetail = () => {
                 <FiCheck className="h-4 w-4" /> 7-day easy returns (demo)
               </p>
             </div>
+            
+            {product.features && product.features.length > 0 && (
+              <div className="mt-6 border-t border-gray-200 pt-4">
+                <h3 className="mb-2 text-base font-bold text-gray-900">About this item</h3>
+                <ul className="list-inside list-disc space-y-1.5 text-sm text-gray-800">
+                  {product.features.map((feature, i) => (
+                    <li key={i} className="leading-relaxed">{feature}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
 

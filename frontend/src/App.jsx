@@ -25,6 +25,9 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
+const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
+const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
 
 const PageLoader = () => (
   <div className="flex min-h-[50vh] items-center justify-center">
@@ -104,6 +107,9 @@ const App = () => (
             >
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<AdminUsers />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="categories" element={<AdminCategories />} />
+              <Route path="orders" element={<AdminOrders />} />
             </Route>
           </Routes>
         </Suspense>

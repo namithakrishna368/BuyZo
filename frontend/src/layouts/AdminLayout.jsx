@@ -3,7 +3,7 @@ import AdminSidebar from '../components/AdminSidebar';
 import Navbar from '../components/Navbar';
 
 const AdminLayout = () => (
-  <div className="min-h-screen bg-cream-100">
+  <div className="min-h-screen bg-gray-50">
     <AdminSidebar />
     <div className="pl-64">
       <Navbar variant="admin" />

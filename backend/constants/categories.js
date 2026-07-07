@@ -9,4 +9,4 @@ export const SHOP_CATEGORIES = [
   'Toys',
 ];
 
-export const MIN_PRODUCTS_PER_CATEGORY = 6;
+export const MIN_PRODUCTS_PER_CATEGORY = 10;

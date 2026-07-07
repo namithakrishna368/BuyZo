@@ -39,7 +39,7 @@ const Home = () => {
               India&apos;s favourite place to shop
             </h1>
             <p className="mt-3 text-lg text-gray-300">
-              6+ products in every category. Prices in ₹. FREE delivery on orders above ₹499.
+              10+ products in every category. Prices in ₹. FREE delivery on orders above ₹499.
             </p>
             <Link
               to="/products"
